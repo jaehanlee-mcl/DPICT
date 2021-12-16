@@ -2,7 +2,7 @@
 
 ------
 ### 1. Preparation
-1. Download a [DPICT-main model](link) parameters and place them in 'checkpoint\DPICT-Main\'
+1. Download a [DPICT-main model](https://drive.google.com/file/d/1UALEBfnbURR_lGzGFCwiXK5_L5wuVO7h/view?usp=sharing) parameters and place them in 'checkpoint\DPICT-Main\'
 
 ------
 ### 2. Evaluation
