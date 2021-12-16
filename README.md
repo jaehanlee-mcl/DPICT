@@ -1,1 +1,1 @@
-# DPICT: Deep Progressive Image Compression Using Trit-Planes
+## DPICT: Deep Progressive Image Compression Using Trit-Planes
