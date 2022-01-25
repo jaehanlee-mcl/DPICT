@@ -39,7 +39,6 @@ def parse_args(argv):
     parser.add_argument("-e", "--epochs", default=500, type=int, help="Number of epochs (default: %(default)s)",)
     parser.add_argument("-lr", "--learning-rate", default=1e-4, type=float, help="Learning rate (default: %(default)s)",)
     parser.add_argument("-n", "--num-workers", type=int, default=16, help="Dataloaders threads (default: %(default)s)",)
-    parser.add_argument("--N", type=int, default=192, help="network size",)
     parser.add_argument("--shared_ratio", type=list, default=[0/1, 1/1], help="divide parameters",)
     parser.add_argument("--specific_ratios", type=list, default=[1/1, 1/1], help="divide parameters",)
     parser.add_argument("--quantize-parameters", type=list, default=[0], help="quantize parameters",) # [-1, -0.5, 0, 0.5, 1], [-4, -2, 0, 2, 4]
@@ -57,6 +56,7 @@ def parse_args(argv):
     parser.add_argument("--checkpoint", type=str, default='checkpoint/DPICT-Main/000.pth.tar', help="Path to a checkpoint") # 'checkpoint/bmshj2018-factorized-lambda0.01/199.pth.tar'
     parser.add_argument("--checkpoint-only-weight", type=bool, default=True)
 
+    parser.add_argument("--N", type=int, default=192, help="network size",)
     parser.add_argument("--dir-addon-rear-q2", type=str, default='DPICT-Post', help="filename",)
     parser.add_argument("--dir-addon-rear-q3", type=str, default='DPICT-Post', help="filename",)
     parser.add_argument("--model-addon-rear", default="dpict-post", choices=models.keys(), help="Model architecture (default: %(default)s)",)
