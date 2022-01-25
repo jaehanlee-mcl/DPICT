@@ -168,7 +168,7 @@ def _encode(info, enc_t_mean):
     compressai.set_entropy_coder('ans')
 
     img = load_image(image)
-    net = models[model](N=info["N"], shared_ratio=shared, specific_ratios=specific)
+    net = models[model](N=info["N-Main"], shared_ratio=shared, specific_ratios=specific)
     if checkpoint:
         state_dict = load_state_dict(torch.load(checkpoint, map_location=device))
         net = net.from_state_dict(state_dict, shared_ratio=shared, specific_ratios=specific).eval().to(device)
@@ -234,7 +234,7 @@ def _decode(info, dec_t_mean):
     dec_start = time.time()
 
     start = time.time()
-    net = models[model](N=info["N"], shared_ratio=shared, specific_ratios=specific)
+    net = models[model](N=info["N-Main"], shared_ratio=shared, specific_ratios=specific)
     if checkpoint:
         state_dict = load_state_dict(torch.load(checkpoint, map_location=device))
         net = net.from_state_dict(state_dict, shared_ratio=shared, specific_ratios=specific).to(device).eval()
@@ -314,11 +314,11 @@ def _postprocessing(info, x_hats, postprocessing_t_mean):
     if not os.path.exists(info["output_post3"][:-4]):
         os.mkdir(info["output_post3"][:-4])
 
-    net_post2 = models[model](N=info["N"], shared_ratio=shared, specific_ratios=specific).to(device)
+    net_post2 = models[model](N=info["N-Post"], shared_ratio=shared, specific_ratios=specific).to(device)
     if checkpoint_post2:
         net_post2.load_state_dict(torch.load(checkpoint_post2)['state_dict'], pass_update=True)
 
-    net_post3 = models[model](N=info["N"], shared_ratio=shared, specific_ratios=specific).to(device)
+    net_post3 = models[model](N=info["N-Post"], shared_ratio=shared, specific_ratios=specific).to(device)
     if checkpoint_post3:
         net_post3.load_state_dict(torch.load(checkpoint_post3)['state_dict'], pass_update=True)
 
@@ -485,7 +485,8 @@ def main():
         "dataset": 'dataset/DPICT-Main/test', #'C:/temp_dataset\compressAI_vimeo_mixture/test_sample',
         "device": "cuda",
         "metric": 'mse',
-        "N": 192,
+        "N-Main": 192,
+        "N-Post": 192,
         "layer": 10,
         "coder": 'ans',
         "show": False,
