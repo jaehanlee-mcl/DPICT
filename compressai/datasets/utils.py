@@ -124,7 +124,7 @@ class ImageFolderAddOn(Dataset):
         for index_dir in range(self.num_dir):
             if index_dir == 0:
                 img = Image.open(self.samples[index]).convert("RGB")
-            elif index_dir > 0:
+            elif index_dir in [1,3,4]: # only use q0, q2, q3
                 img = Image.open(self.samples_addon[index_dir-1][index]).convert("RGB")
             images.append(img)
 
