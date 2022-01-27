@@ -129,7 +129,7 @@ def main(argv):
         print("Loading", args.checkpoint_addon_rear_q2)
         checkpoint_addon_rear = torch.load(args.checkpoint_addon_rear_q2, map_location=device)
         net_addon_rear_q2.load_state_dict(checkpoint_addon_rear["state_dict"])
-        if args.checkpoint_addon_rear_only_weight is False:
+        if args.checkpoint_addon_rear_only_weight_q2 is False:
             last_epoch = checkpoint_addon_rear["epoch"] + 1
             optimizer_addon_rear_q2.load_state_dict(checkpoint_addon_rear["optimizer"])
             aux_optimizer_addon_rear_q2.load_state_dict(checkpoint_addon_rear["aux_optimizer"])
@@ -141,7 +141,7 @@ def main(argv):
         print("Loading", args.checkpoint_addon_rear_q3)
         checkpoint_addon_rear = torch.load(args.checkpoint_addon_rear_q3, map_location=device)
         net_addon_rear_q3.load_state_dict(checkpoint_addon_rear["state_dict"])
-        if args.checkpoint_addon_rear_only_weight is False:
+        if args.checkpoint_addon_rear_only_weight_q3 is False:
             last_epoch = checkpoint_addon_rear["epoch"] + 1
             optimizer_addon_rear_q3.load_state_dict(checkpoint_addon_rear["optimizer"])
             aux_optimizer_addon_rear_q3.load_state_dict(checkpoint_addon_rear["aux_optimizer"])
