@@ -314,11 +314,11 @@ def _postprocessing(info, x_hats, postprocessing_t_mean):
     if not os.path.exists(info["output_post3"][:-4]):
         os.mkdir(info["output_post3"][:-4])
 
-    net_post2 = models[model](N=info["N-Post"], shared_ratio=shared, specific_ratios=specific).to(device)
+    net_post2 = models[model](N=info["N-Post"], shared_ratio=shared, specific_ratios=specific).to(device).half()
     if checkpoint_post2:
         net_post2.load_state_dict(torch.load(checkpoint_post2)['state_dict'], pass_update=True)
 
-    net_post3 = models[model](N=info["N-Post"], shared_ratio=shared, specific_ratios=specific).to(device)
+    net_post3 = models[model](N=info["N-Post"], shared_ratio=shared, specific_ratios=specific).to(device).half()
     if checkpoint_post3:
         net_post3.load_state_dict(torch.load(checkpoint_post3)['state_dict'], pass_update=True)
 
@@ -326,8 +326,8 @@ def _postprocessing(info, x_hats, postprocessing_t_mean):
     x_hats_post3 = []
     with torch.no_grad():
         for index in range(len(x_hats)):
-            x_hats_post2.append(net_post2(x_hats[index])['x_hat'])
-            x_hats_post3.append(net_post3(x_hats[index])['x_hat'])
+            x_hats_post2.append(net_post2(x_hats[index].half())['x_hat'].float())
+            x_hats_post3.append(net_post3(x_hats[index].half())['x_hat'].float())
 
     postprocessing_time = time.time() - postprocessing_start
     print(f"Postprocessing {postprocessing_time:.1f}sec, ", end="\t")
