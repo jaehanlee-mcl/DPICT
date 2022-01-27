@@ -395,16 +395,16 @@ def psnr(a: torch.Tensor, b: torch.Tensor) -> float:
 
 def update_info(info):
 
-    info["filepath"] = info["fileroot"] + f"/{info['epoch']:03d}.pth.tar"
-    info["updated-name"] = f"updated{info['epoch']:03d}"
+    info["filepath"] = info["fileroot"] + f"/{info['epoch-main']:03d}.pth.tar"
+    info["updated-name"] = f"updated{info['epoch-main']:03d}"
     info["updated-path"] = info["fileroot"] + f"/{info['updated-name']}.pth.tar"
 
-    info["filepath-post2"] = info["fileroot-post"] + f"/{info['epoch']:03d}_2.pth.tar"
-    info["updated-name-post2"] = f"{info['epoch']:03d}_2"
+    info["filepath-post2"] = info["fileroot-post"] + f"/{info['epoch-post']:03d}_2.pth.tar"
+    info["updated-name-post2"] = f"{info['epoch-post']:03d}_2"
     info["updated-path-post2"] = info["fileroot-post"] + f"/{info['updated-name-post2']}.pth.tar"
 
-    info["filepath-post3"] = info["fileroot-post"] + f"/{info['epoch']:03d}_3.pth.tar"
-    info["updated-name-post3"] = f"{info['epoch']:03d}_3"
+    info["filepath-post3"] = info["fileroot-post"] + f"/{info['epoch-post']:03d}_3.pth.tar"
+    info["updated-name-post3"] = f"{info['epoch-post']:03d}_3"
     info["updated-path-post3"] = info["fileroot-post"] + f"/{info['updated-name-post3']}.pth.tar"
 
     print(f"Model: {info['architecture']:s}, metric: {info['metric']:s},"
@@ -413,25 +413,67 @@ def update_info(info):
 
     if not os.path.exists(f"encoded/{info['experiment']}"):
         os.mkdir(f"encoded/{info['experiment']}")
-    if not os.path.exists(f"encoded/{info['experiment']}" + f"/epoch{info['epoch']:03d}"):
-        os.mkdir(f"encoded/{info['experiment']}" + f"/epoch{info['epoch']:03d}")
+    if not os.path.exists(f"encoded/{info['experiment']}" + f"/epoch{info['epoch-main']:03d}"):
+        os.mkdir(f"encoded/{info['experiment']}" + f"/epoch{info['epoch-main']:03d}")
 
     if not os.path.exists(f"decoded/{info['experiment']}"):
         os.mkdir(f"decoded/{info['experiment']}")
-    if not os.path.exists(f"decoded/{info['experiment']}" + f"/epoch{info['epoch']:03d}"):
-        os.mkdir(f"decoded/{info['experiment']}" + f"/epoch{info['epoch']:03d}")
+    if not os.path.exists(f"decoded/{info['experiment']}" + f"/epoch{info['epoch-main']:03d}"):
+        os.mkdir(f"decoded/{info['experiment']}" + f"/epoch{info['epoch-main']:03d}")
 
     if not os.path.exists(f"postprocessing2/{info['experiment']}"):
         os.mkdir(f"postprocessing2/{info['experiment']}")
-    if not os.path.exists(f"postprocessing2/{info['experiment']}" + f"/epoch{info['epoch']:03d}"):
-        os.mkdir(f"postprocessing2/{info['experiment']}" + f"/epoch{info['epoch']:03d}")
+    if not os.path.exists(f"postprocessing2/{info['experiment']}" + f"/epoch{info['epoch-post']:03d}"):
+        os.mkdir(f"postprocessing2/{info['experiment']}" + f"/epoch{info['epoch-post']:03d}")
 
     if not os.path.exists(f"postprocessing3/{info['experiment']}"):
         os.mkdir(f"postprocessing3/{info['experiment']}")
-    if not os.path.exists(f"postprocessing3/{info['experiment']}" + f"/epoch{info['epoch']:03d}"):
-        os.mkdir(f"postprocessing3/{info['experiment']}" + f"/epoch{info['epoch']:03d}")
+    if not os.path.exists(f"postprocessing3/{info['experiment']}" + f"/epoch{info['epoch-post']:03d}"):
+        os.mkdir(f"postprocessing3/{info['experiment']}" + f"/epoch{info['epoch-post']:03d}")
 
-    info["experiment"] += f"/epoch{info['epoch']:03d}"
+    info["experiment"] += f"/epoch{info['epoch-main']:03d}-{info['epoch-post']:03d}"
+
+    return info
+
+def update_info(info):
+
+    info["filepath"] = info["fileroot"] + f"/{info['epoch-main']:03d}.pth.tar"
+    info["updated-name"] = f"updated{info['epoch-main']:03d}"
+    info["updated-path"] = info["fileroot"] + f"/{info['updated-name']}.pth.tar"
+
+    info["filepath-post2"] = info["fileroot-post"] + f"/{info['epoch-post']:03d}_2.pth.tar"
+    info["updated-name-post2"] = f"{info['epoch-post']:03d}_2"
+    info["updated-path-post2"] = info["fileroot-post"] + f"/{info['updated-name-post2']}.pth.tar"
+
+    info["filepath-post3"] = info["fileroot-post"] + f"/{info['epoch-post']:03d}_3.pth.tar"
+    info["updated-name-post3"] = f"{info['epoch-post']:03d}_3"
+    info["updated-path-post3"] = info["fileroot-post"] + f"/{info['updated-name-post3']}.pth.tar"
+
+    print(f"Model: {info['architecture']:s}, metric: {info['metric']:s},"
+          f" checkpoint: {info['filepath']}")
+    print("   ")
+
+    if not os.path.exists(f"encoded/{info['experiment']}"):
+        os.mkdir(f"encoded/{info['experiment']}")
+    if not os.path.exists(f"encoded/{info['experiment']}" + f"/epoch{info['epoch-main']:03d}"):
+        os.mkdir(f"encoded/{info['experiment']}" + f"/epoch{info['epoch-main']:03d}")
+
+    if not os.path.exists(f"decoded/{info['experiment']}"):
+        os.mkdir(f"decoded/{info['experiment']}")
+    if not os.path.exists(f"decoded/{info['experiment']}" + f"/epoch{info['epoch-main']:03d}"):
+        os.mkdir(f"decoded/{info['experiment']}" + f"/epoch{info['epoch-main']:03d}")
+
+    if not os.path.exists(f"postprocessing2/{info['experiment']}"):
+        os.mkdir(f"postprocessing2/{info['experiment']}")
+    if not os.path.exists(f"postprocessing2/{info['experiment']}" + f"/epoch{info['epoch-post']:03d}"):
+        os.mkdir(f"postprocessing2/{info['experiment']}" + f"/epoch{info['epoch-post']:03d}")
+
+    if not os.path.exists(f"postprocessing3/{info['experiment']}"):
+        os.mkdir(f"postprocessing3/{info['experiment']}")
+    if not os.path.exists(f"postprocessing3/{info['experiment']}" + f"/epoch{info['epoch-post']:03d}"):
+        os.mkdir(f"postprocessing3/{info['experiment']}" + f"/epoch{info['epoch-post']:03d}")
+
+    info["experiment"] += f"/epoch{info['epoch-main']:03d}-{info['epoch-post']:03d}"
 
     return info
 
@@ -492,7 +534,8 @@ def main():
         "show": False,
         "estimation": False,
         "no-update": False,
-        "epoch": 00,
+        "epoch-main": 0,
+        "epoch-post": 0,
     }
 
     info = update_info(info)
