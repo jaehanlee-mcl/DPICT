@@ -326,15 +326,8 @@ def _postprocessing(info, x_hats, postprocessing_t_mean):
     x_hats_post3 = []
     with torch.no_grad():
         for index in range(len(x_hats)):
-            if index == 0:
-                x_hat_all = x_hats[index]
-            else:
-                x_hat_all = torch.cat((x_hat_all, x_hats[index]), dim=0)
-        x_hat_post2_all = net_post2(x_hat_all)['x_hat']
-        x_hat_post3_all = net_post3(x_hat_all)['x_hat']
-        for index in range(len(x_hats)):
-            x_hats_post2.append(x_hat_post2_all[index:index+1])
-            x_hats_post3.append(x_hat_post3_all[index:index+1])
+            x_hats_post2.append(net_post2(x_hats[index])['x_hat'])
+            x_hats_post3.append(net_post3(x_hats[index])['x_hat'])
 
     postprocessing_time = time.time() - postprocessing_start
     print(f"Postprocessing {postprocessing_time:.1f}sec, ", end="\t")
@@ -423,57 +416,17 @@ def update_info(info):
 
     if not os.path.exists(f"postprocessing2/{info['experiment']}"):
         os.mkdir(f"postprocessing2/{info['experiment']}")
-    if not os.path.exists(f"postprocessing2/{info['experiment']}" + f"/epoch{info['epoch-post']:03d}"):
-        os.mkdir(f"postprocessing2/{info['experiment']}" + f"/epoch{info['epoch-post']:03d}")
+    if not os.path.exists(f"postprocessing2/{info['experiment']}" + f"/epoch{info['epoch-main']:03d}"):
+        os.mkdir(f"postprocessing2/{info['experiment']}" + f"/epoch{info['epoch-main']:03d}")
 
     if not os.path.exists(f"postprocessing3/{info['experiment']}"):
         os.mkdir(f"postprocessing3/{info['experiment']}")
-    if not os.path.exists(f"postprocessing3/{info['experiment']}" + f"/epoch{info['epoch-post']:03d}"):
-        os.mkdir(f"postprocessing3/{info['experiment']}" + f"/epoch{info['epoch-post']:03d}")
+    if not os.path.exists(f"postprocessing3/{info['experiment']}" + f"/epoch{info['epoch-main']:03d}"):
+        os.mkdir(f"postprocessing3/{info['experiment']}" + f"/epoch{info['epoch-main']:03d}")
 
-    info["experiment"] += f"/epoch{info['epoch-main']:03d}-{info['epoch-post']:03d}"
+    info["experiment-main"] = info["experiment"] + f"/epoch{info['epoch-main']:03d}"
+    info["experiment-post"] = info["experiment"] + f"/epoch{info['epoch-main']:03d}"
 
-    return info
-
-def update_info(info):
-
-    info["filepath"] = info["fileroot"] + f"/{info['epoch-main']:03d}.pth.tar"
-    info["updated-name"] = f"updated{info['epoch-main']:03d}"
-    info["updated-path"] = info["fileroot"] + f"/{info['updated-name']}.pth.tar"
-
-    info["filepath-post2"] = info["fileroot-post"] + f"/{info['epoch-post']:03d}_2.pth.tar"
-    info["updated-name-post2"] = f"{info['epoch-post']:03d}_2"
-    info["updated-path-post2"] = info["fileroot-post"] + f"/{info['updated-name-post2']}.pth.tar"
-
-    info["filepath-post3"] = info["fileroot-post"] + f"/{info['epoch-post']:03d}_3.pth.tar"
-    info["updated-name-post3"] = f"{info['epoch-post']:03d}_3"
-    info["updated-path-post3"] = info["fileroot-post"] + f"/{info['updated-name-post3']}.pth.tar"
-
-    print(f"Model: {info['architecture']:s}, metric: {info['metric']:s},"
-          f" checkpoint: {info['filepath']}")
-    print("   ")
-
-    if not os.path.exists(f"encoded/{info['experiment']}"):
-        os.mkdir(f"encoded/{info['experiment']}")
-    if not os.path.exists(f"encoded/{info['experiment']}" + f"/epoch{info['epoch-main']:03d}"):
-        os.mkdir(f"encoded/{info['experiment']}" + f"/epoch{info['epoch-main']:03d}")
-
-    if not os.path.exists(f"decoded/{info['experiment']}"):
-        os.mkdir(f"decoded/{info['experiment']}")
-    if not os.path.exists(f"decoded/{info['experiment']}" + f"/epoch{info['epoch-main']:03d}"):
-        os.mkdir(f"decoded/{info['experiment']}" + f"/epoch{info['epoch-main']:03d}")
-
-    if not os.path.exists(f"postprocessing2/{info['experiment']}"):
-        os.mkdir(f"postprocessing2/{info['experiment']}")
-    if not os.path.exists(f"postprocessing2/{info['experiment']}" + f"/epoch{info['epoch-post']:03d}"):
-        os.mkdir(f"postprocessing2/{info['experiment']}" + f"/epoch{info['epoch-post']:03d}")
-
-    if not os.path.exists(f"postprocessing3/{info['experiment']}"):
-        os.mkdir(f"postprocessing3/{info['experiment']}")
-    if not os.path.exists(f"postprocessing3/{info['experiment']}" + f"/epoch{info['epoch-post']:03d}"):
-        os.mkdir(f"postprocessing3/{info['experiment']}" + f"/epoch{info['epoch-post']:03d}")
-
-    info["experiment"] += f"/epoch{info['epoch-main']:03d}-{info['epoch-post']:03d}"
 
     return info
 
@@ -493,12 +446,12 @@ def save_record_dict(info, metrics, data_list, data_index_list, dir_name, metric
         record_dict.setdefault(f"data{image_index:02d} psnr", metrics[:, 3 * image_index + 1])
         record_dict.setdefault(f"data{image_index:02d} ms-ssim", metrics[:, 3 * image_index + 2])
 
-    data_deepest_index = dir_name + f"/{info['experiment']}" + '/' + data_list[0][:-4]
+    data_deepest_index = dir_name + f"/{info['experiment-main']}" + '/' + data_list[0][:-4]
     deepest_L = 0
     for index in data_index_list:
-        if deepest_L < len(os.listdir(dir_name + f"/{info['experiment']}" + '/' + data_list[index][:-4])):
-            deepest_L = len(os.listdir(dir_name + f"/{info['experiment']}" + '/' + data_list[index][:-4]))
-            data_deepest_index = dir_name + f"/{info['experiment']}" + '/' + data_list[index][:-4]
+        if deepest_L < len(os.listdir(dir_name + f"/{info['experiment-main']}" + '/' + data_list[index][:-4])):
+            deepest_L = len(os.listdir(dir_name + f"/{info['experiment-main']}" + '/' + data_list[index][:-4]))
+            data_deepest_index = dir_name + f"/{info['experiment-main']}" + '/' + data_list[index][:-4]
 
     recon_image_list = os.listdir(data_deepest_index)
     recon_image_list.sort(reverse=True)
@@ -510,7 +463,7 @@ def save_record_dict(info, metrics, data_list, data_index_list, dir_name, metric
 
 def main():
     torch.set_num_threads(1)  # just to be sure
-    os.environ["CUDA_VISIBLE_DEVICES"] = "1"
+    os.environ["CUDA_VISIBLE_DEVICES"] = "0"
 
     ##
     # model: ['bmshj2018-factorized', 'bmshj2018-hyperprior', 'mbt2018-mean', 'mbt2018', 'cheng2020-anchor', 'cheng2020-attn']
@@ -524,11 +477,11 @@ def main():
         "architecture-post": 'dpict-post',
         "fileroot-post": 'checkpoint/DPICT-Post',
         "updated-nameprefix": 'updated',
-        "dataset": 'dataset/DPICT-Main/test', #'C:/temp_dataset\compressAI_vimeo_mixture/test_sample',
+        "dataset": 'dataset/DPICT-Main/test', 
         "device": "cuda",
         "metric": 'mse',
         "N-Main": 192,
-        "N-Post": 192,
+        "N-Post": 144,
         "layer": 10,
         "coder": 'ans',
         "show": False,
@@ -552,11 +505,11 @@ def main():
     get_metrics_post3_t_mean = 0
     save_images_post3_t_mean = 0
     metrics = np.zeros((1000, 3 * 25))
-    metric_name = f"decoded/{info['experiment']}/record.csv"
+    metric_name = f"decoded/{info['experiment-main']}/record.csv"
     metrics_post2 = np.zeros((1000, 3 * 25))
-    metric_post2_name = f"postprocessing2/{info['experiment']}/record.csv"
+    metric_post2_name = f"postprocessing2/{info['experiment-post']}/record.csv"
     metrics_post3 = np.zeros((1000, 3 * 25))
-    metric_post3_name = f"postprocessing3/{info['experiment']}/record.csv"
+    metric_post3_name = f"postprocessing3/{info['experiment-post']}/record.csv"
 
     data_list = os.listdir(info['dataset'])
     data_index_list = list(range(len(data_list)))
@@ -568,10 +521,10 @@ def main():
             x_in, x_out, bpp = _estimation(info["image"], info["architecture"], info["metric"], info["quality"], info["coder"], info["show"], info["output_decoded"], get_return=True)
 
         elif info["estimation"] == False:
-            info["output_encoded"] = f"encoded/{info['experiment']}/" + data_list[index] + '.bin'
-            info["output_decoded"] = f"decoded/{info['experiment']}/" + data_list[index]
-            info["output_post2"] = f"postprocessing2/{info['experiment']}/" + data_list[index]
-            info["output_post3"] = f"postprocessing3/{info['experiment']}/" + data_list[index]
+            info["output_encoded"] = f"encoded/{info['experiment-main']}/" + data_list[index] + '.bin'
+            info["output_decoded"] = f"decoded/{info['experiment-main']}/" + data_list[index]
+            info["output_post2"] = f"postprocessing2/{info['experiment-post']}/" + data_list[index]
+            info["output_post3"] = f"postprocessing3/{info['experiment-post']}/" + data_list[index]
 
             print(f"data{index + 1:02d} ", end="")
             x_in, y_strings, z_strings, z_shape, enc_t_mean = _encode(info, enc_t_mean)
