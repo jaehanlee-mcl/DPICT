@@ -80,8 +80,7 @@ def compress_DPICT(y, means_hat, scales_hat):
         if i < max_L - opt_pnum:
             cond_pmfs = list(map(lambda p, idx: (p * idx).view(p.size(0), 3, -1).sum(-1) / (p * idx).view(p.size(0), 1, -1).sum(-1), pmfs_list[:i + 1], idx_ts_list[:i + 1]))
             tail_mass = list(map(lambda p: torch.zeros([len(p), 1]).to(device) + 1e-09, cond_pmfs))
-            pmf_length = list(map(lambda tm: torch.zeros_like(tm).int().to(device) + mode, tail_mass))
-            cond_cdf = torch.cat(list(map(lambda p, tm, l: _pmf_to_cdf(p, tm, l, mode), cond_pmfs, tail_mass, pmf_length)), dim=0).tolist()
+            cond_cdf = torch.cat(list(map(lambda p, tm: _pmf_to_cdf_tensor(p, tm), cond_pmfs, tail_mass)), dim=0).tolist()
 
             total_symbols_list = torch.cat([Nary_tensor[l_per_ele.view(-1) == max_L - j, i] - (mode // 2) for j in range(i + 1)]).tolist()
             indexes_list = list(range(len(total_symbols_list)))
@@ -91,7 +90,7 @@ def compress_DPICT(y, means_hat, scales_hat):
             encoder.encode_with_indexes(
                 total_symbols_list, indexes_list, cond_cdf, cdf_lengths, offsets
             )
-            del cond_pmfs, tail_mass, pmf_length, cond_cdf
+            del cond_pmfs, tail_mass, cond_cdf
             torch.cuda.empty_cache()
             y_strings[i].append(encoder.flush())
 
@@ -129,8 +128,7 @@ def compress_DPICT(y, means_hat, scales_hat):
             pmfs_norm = list(map(lambda p: p / p.sum(-1).view(-1, 1), pmfs_cond_list_l))
 
             tail_mass = list(map(lambda p: torch.zeros([len(p), 1]).to(device) + 1e-09, pmfs_norm))
-            pmf_length = list(map(lambda tm: torch.zeros_like(tm).int().to(device) + mode, tail_mass))
-            cond_cdf = torch.cat(list(map(lambda p, tm, l: _pmf_to_cdf(p, tm, l, mode), pmfs_norm, tail_mass, pmf_length)), dim=0)
+            cond_cdf = torch.cat(list(map(lambda p, tm: _pmf_to_cdf_tensor(p, tm), pmfs_norm, tail_mass)), dim=0)
             cond_cdf = cond_cdf[torch.argsort(optim_tensor, descending=True)].tolist()
             total_symbols_list = torch.cat([Nary_tensor[l_per_ele.view(-1) == max_L - j, i] - (mode // 2) for j in range(i + 1)])
             total_symbols_list = total_symbols_list[torch.argsort(optim_tensor, descending=True)].tolist()
@@ -234,8 +232,7 @@ def decompress_DPICT(y_strings, means_hat, scales_hat):
 
             cond_pmfs = list(map(lambda p, idx: (p * idx).view(p.size(0), 3, -1).sum(-1) / (p * idx).view(p.size(0), 1, -1).sum(-1), pmfs_list[:i + 1], idx_ts_list[:i + 1]))
             tail_mass = list(map(lambda p: torch.zeros([len(p), 1]).to(device) + 1e-09, cond_pmfs))
-            pmf_length = list(map(lambda tm: torch.zeros_like(tm).int().to(device) + mode, tail_mass))
-            cond_cdf = torch.cat(list(map(lambda p, tm, l: _pmf_to_cdf(p, tm, l, mode), cond_pmfs, tail_mass, pmf_length)), dim=0).tolist()
+            cond_cdf = torch.cat(list(map(lambda p, tm: _pmf_to_cdf_tensor(p, tm), cond_pmfs, tail_mass)), dim=0).tolist()
 
             symbols_num = (l_per_ele.view(-1) >= max_L - i).sum().item()
             indexes_list = list(range(symbols_num))
@@ -296,14 +293,13 @@ def decompress_DPICT(y_strings, means_hat, scales_hat):
             pmfs_norm = list(map(lambda p: p / p.sum(-1).view(-1, 1), pmfs_cond_list_l))
 
             tail_mass = list(map(lambda p: torch.zeros([len(p), 1]).to(device) + 1e-09, pmfs_norm))
-            pmf_length = list(map(lambda tm: torch.zeros_like(tm).int().to(device) + mode, tail_mass))
-            cond_cdf = torch.cat(list(map(lambda p, tm, l: _pmf_to_cdf(p, tm, l, mode), pmfs_norm, tail_mass, pmf_length)), dim=0)
+            cond_cdf = torch.cat(list(map(lambda p, tm: _pmf_to_cdf_tensor(p, tm), pmfs_norm, tail_mass)), dim=0)
             cond_cdf = cond_cdf[torch.argsort(optim_tensor, descending=True)].tolist()
 
             total_symbols = (l_per_ele.view(-1) >= max_L - i).sum().item()
             cdf_lengths = [mode + 2 for _ in range(total_symbols)]
             offsets = [-(mode // 2) for _ in range(total_symbols)]
-            del tail_mass, pmf_length
+            del tail_mass
             torch.cuda.empty_cache()
 
             pnum_part = _pnum_part(i, max_L)
@@ -418,6 +414,12 @@ def _pmf_to_cdf(pmf, tail_mass, pmf_length, max_length):
         _cdf = torch.IntTensor(_cdf)
         cdf[i, : _cdf.size(0)] = _cdf
     return cdf
+
+def _pmf_to_cdf_tensor(pmf, tail_mass):
+    _cdf = torch.cat([pmf, tail_mass], dim=1).clamp_(min=2e-05)
+    _cdf = torch.round((_cdf / _cdf.sum(dim=1, keepdim=True)).cumsum(dim=1) * (2 ** 16))
+    _cdf = torch.cat([torch.zeros_like(tail_mass), _cdf], dim=1).int()
+    return _cdf
 
 def _standardized_cumulative(inputs):
     half = float(0.5)
