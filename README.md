@@ -3,6 +3,7 @@
 ------
 ### 1. Preparation
 1. Download a [DPICT-main model](https://drive.google.com/file/d/1UALEBfnbURR_lGzGFCwiXK5_L5wuVO7h/view?usp=sharing) parameters and place them in 'checkpoint\DPICT-Main\'
+2. Download [DPICT-post model 1](https://drive.google.com/file/d/1BSQbT32Al18EPPifvdMQQJDfGnZby8zs/view?usp=sharing) and [DPICT-post model 2](https://drive.google.com/file/d/1_Xc8lhxq96rOa1z_m0EFohxz0lt5wdEf/view?usp=sharing) parameters and place them in 'checkpoint\DPICT-Post\'
 
 ------
 ### 2. Training of DPICT-Main
