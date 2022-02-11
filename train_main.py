@@ -18,6 +18,8 @@ import argparse
 import random
 import sys
 import os
+import logging
+import logging.handlers
 
 import torch
 import torch.optim as optim
@@ -110,8 +112,14 @@ def main(argv):
     initial_scales = np.array(args.initial_loss_weights)
 
     last_epoch = 0
+    log_format = "%(levelname)s %(asctime)s - %(message)s"
     if args.checkpoint:  # load from previous checkpoint
-        print("Loading", args.checkpoint)
+        logging.basicConfig(filename='log/' + args.dir + '.log',
+                            filemode='a',
+                            format=log_format,
+                            level=logging.DEBUG)
+
+        logging.info("Loading", args.checkpoint)
         checkpoint = torch.load(args.checkpoint, map_location=device)
         net.load_state_dict(checkpoint["state_dict"])
         if args.checkpoint_only_weight is False:
@@ -120,13 +128,19 @@ def main(argv):
             aux_optimizer.load_state_dict(checkpoint["aux_optimizer"])
             loss_weights = checkpoint["loss_weights"]
             initial_scales = checkpoint["initial_scales"]
+    else:
+        logging.basicConfig(filename='log/' + args.dir + '.log',
+                            filemode='w',
+                            format=log_format,
+                            level=logging.DEBUG)
+    logger = logging.getLogger()
 
     best_loss = float("inf")
     for epoch in range(last_epoch, args.epochs):
 
-        print(f"Learning rate: {optimizer.param_groups[0]['lr']}")
+        logging.info(f"Learning rate: {optimizer.param_groups[0]['lr']}")
         for index in range(len(args.lmbda)):
-            print(
+            logging.info(
                 f"Shared Ratios: {args.shared_ratio[0]} ~ {args.shared_ratio[1]} | "
                 f"Specific Ratios: {args.specific_ratios[index]} ~ {args.specific_ratios[index+1]} | "
                 f"Lambda: {args.lmbda[index]} | "
@@ -148,12 +162,12 @@ def main(argv):
                 loss_weights=loss_weights,
             )
         # distillation == True
-        print('  ')
-        print('  [True distillation]')
+        logging.info('  ')
+        logging.info('  [True distillation]')
         losses_test, overall_loss_test = \
             test_DPICT_main(epoch, test_dataloader, net, criterion, quantize_parameters=args.quantize_parameters, loss_weights=loss_weights, distillation=True)
         # distillation == False
-        print('  [False distillation]')
+        logging.info('  [False distillation]')
         test_DPICT_main(epoch, test_dataloader, net, criterion, quantize_parameters=args.quantize_parameters, loss_weights=loss_weights, distillation=False)
 
         is_best = np.mean(overall_loss_test) < best_loss
