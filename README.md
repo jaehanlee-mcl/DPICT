@@ -8,11 +8,13 @@
 ------
 ### 2. Training of DPICT-Main
 1. By executing 'train_main.py', the main network of DPICT is trained.
+2. The training progress is saved in the log directory.
 
 ------
 ### 3. Training of DPICT-Post
 1. When you run 'make_post_data.py', data for training DPICT's post networks are created. The path to the dataset and the path to the DPICT main network parameter file should be set appropriately.
 2. By executing 'train_post.py', two post networks of DPICT are trained.
+3. The training progress is saved in the log directory.
 
 ------
 ### 4. Compression & evaluation
