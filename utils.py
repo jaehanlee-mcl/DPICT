@@ -18,6 +18,7 @@ import random
 import shutil
 import sys
 import os
+import logging
 
 import torch
 import torch.nn as nn
@@ -140,22 +141,22 @@ class WeightsRebalancer():
 
         weights = weights_with_difficuty * magnitude_ratio
 
-        print("  ")
-        print("alpha:  ", alpha)
-        print("  ")
-        print("portion(prev):  ", portion_prev)
-        print("portion(current):  ", portion_current)
-        print("difficulty:  ", difficulty)
-        print("  ")
-        print("weights(current):  ", self.weights_current)
-        print("weights(alpha0):  ", weights_alpha0)
-        print("weights(next):  ", weights)
-        print("magnitude ratio:  ", magnitude_ratio)
-        print("  ")
-        print("loss(current):  ", np.sum(self.weights_current * losses_current))
-        print("loss(alpha0):  ", np.sum(weights_alpha0 * losses_current))
-        print("loss(next):  ", np.sum(weights * losses_current))
-        print("  ")
+        logging.info("  ")
+        logging.info("alpha:  ", alpha)
+        logging.info("  ")
+        logging.info("portion(prev):  ", portion_prev)
+        logging.info("portion(current):  ", portion_current)
+        logging.info("difficulty:  ", difficulty)
+        logging.info("  ")
+        logging.info("weights(current):  ", self.weights_current)
+        logging.info("weights(alpha0):  ", weights_alpha0)
+        logging.info("weights(next):  ", weights)
+        logging.info("magnitude ratio:  ", magnitude_ratio)
+        logging.info("  ")
+        logging.info("loss(current):  ", np.sum(self.weights_current * losses_current))
+        logging.info("loss(alpha0):  ", np.sum(weights_alpha0 * losses_current))
+        logging.info("loss(next):  ", np.sum(weights * losses_current))
+        logging.info("  ")
 
         return weights
 
@@ -357,7 +358,7 @@ def train_DPICT_main(
             loss_recoder.update_losses(loss_across_index)
 
         if i % 100 == 0:
-            print(
+            logging.info(
                 f"Train epoch {epoch}: ["
                 f"{i*len(d)}/{len(train_dataloader.dataset)}"
                 f" ({100. * i / len(train_dataloader):.0f}%)]"
@@ -365,7 +366,7 @@ def train_DPICT_main(
                 f"\tAux loss: {aux_loss.item():.2f} |"
             )
             for index_divide in range(len(criterion)):
-                print(
+                logging.info(
                     f'\tLoss: {torch.mean(out_criterion[index_divide]["loss"]).item():.3f} |'
                     f'\tMSE loss: {torch.mean(out_criterion[index_divide]["mse_loss"]).item():.3f} |'
                     f'\tMS-SSIM loss: {torch.mean(out_criterion[index_divide]["ms_ssim_loss"]).item():.4f} |'
@@ -464,7 +465,7 @@ def train_DPICT_post(
             loss_recoder_rear_q3.update_losses(loss_across_index_rear_q3)
 
         if i % 100 == 0:
-            print(
+            logging.info(
                 f"Train epoch {epoch}: ["
                 f"{i*batch_size}/{len(train_dataloader.dataset)}"
                 f" ({100. * i / len(train_dataloader):.0f}%)] \n"
@@ -474,14 +475,14 @@ def train_DPICT_post(
                 f"\tAux loss Rear Q3: {aux_loss_rear_q3.item():.2f} || \n"
             )
             for index_divide in range(len(criterion)):
-                print(
+                logging.info(
                     f'\tQ2 Loss (Rear): {torch.mean(out_criterion_rear_q2[index_divide]["loss"]).item():.3f} |'
                     f'\tMSE loss : {torch.mean(out_criterion_rear_q2[index_divide]["mse_loss"]).item():.3f} |'
                     f'\tMS-SSIM loss : {torch.mean(out_criterion_rear_q2[index_divide]["ms_ssim_loss"]).item():.4f} |'
                     f"\tPSNR : {np.mean(out_criterion_rear_q2[index_divide]['PSNR']).item():.2f} |"
                     f"\tMS-SSIM (DB) : {np.mean(out_criterion_rear_q2[index_divide]['MS-SSIM-DB']).item():.2f} "
                 )
-                print(
+                logging.info(
                     f'\t   Loss (Base): {torch.mean(out_criterion_base_q2[index_divide]["loss"]).item():.3f} |'
                     f'\tMSE loss : {torch.mean(out_criterion_base_q2[index_divide]["mse_loss"]).item():.3f} |'
                     f'\tMS-SSIM loss : {torch.mean(out_criterion_base_q2[index_divide]["ms_ssim_loss"]).item():.4f} |'
@@ -489,14 +490,14 @@ def train_DPICT_post(
                     f"\tMS-SSIM (DB) : {np.mean(out_criterion_base_q2[index_divide]['MS-SSIM-DB']).item():.2f} "
                 )
 
-                print(
+                logging.info(
                     f'\tQ3 Loss (Rear): {torch.mean(out_criterion_rear_q3[index_divide]["loss"]).item():.3f} |'
                     f'\tMSE loss : {torch.mean(out_criterion_rear_q3[index_divide]["mse_loss"]).item():.3f} |'
                     f'\tMS-SSIM loss : {torch.mean(out_criterion_rear_q3[index_divide]["ms_ssim_loss"]).item():.4f} |'
                     f"\tPSNR : {np.mean(out_criterion_rear_q3[index_divide]['PSNR']).item():.2f} |"
                     f"\tMS-SSIM (DB) : {np.mean(out_criterion_rear_q3[index_divide]['MS-SSIM-DB']).item():.2f} "
                 )
-                print(
+                logging.info(
                     f'\t   Loss (Base): {torch.mean(out_criterion_base_q3[index_divide]["loss"]).item():.3f} |'
                     f'\tMSE loss : {torch.mean(out_criterion_base_q3[index_divide]["mse_loss"]).item():.3f} |'
                     f'\tMS-SSIM loss : {torch.mean(out_criterion_base_q3[index_divide]["ms_ssim_loss"]).item():.4f} |'
@@ -504,7 +505,7 @@ def train_DPICT_post(
                     f"\tMS-SSIM (DB) : {np.mean(out_criterion_base_q3[index_divide]['MS-SSIM-DB']).item():.2f} "
                 )
 
-                print("\n")
+                logging.info("\n")
 
     loss_recoder_rear_q2.update_overall_loss(loss_weights)
     loss_recoder_rear_q3.update_overall_loss(loss_weights)
@@ -573,7 +574,7 @@ def test_DPICT_main(epoch, test_dataloader, model, criterion, quantize_parameter
                 loss_recoder.update_losses(loss_across_index)
 
     for index_divide in range(len(criterion)):
-        print(
+        logging.info(
             f"Test epoch {epoch}: Average losses:"
             f"\tLoss: {loss[index_divide].avg:.3f} |"
             f"\tMSE loss: {mse_loss[index_divide].avg:.3f} |"
@@ -733,18 +734,18 @@ def test_DPICT_post(epoch,
 
 
     for index_divide in range(len(criterion)):
-        print(
+        logging.info(
             f"Test epoch {epoch}: Average losses: "
         )
 
-        print(
+        logging.info(
             f"\tQ2 Loss (Rear): {loss_rear_q2[index_divide].avg:.3f} |"
             f"\tMSE loss: {mse_loss_rear_q2[index_divide].avg:.3f} |"
             f'\tMS-SSIM loss: {msssim_loss_rear_q2[index_divide].avg:.4f} |'
             f"\tPSNR: {psnr_rear_q2[index_divide].avg:.2f} |"
             f"\tMS-SSIM(DB): {msssim_db_rear_q2[index_divide].avg:.2f} "
         )
-        print(
+        logging.info(
             f"\t   Loss (Base): {loss_base_q2[index_divide].avg:.3f} |"
             f"\tMSE loss: {mse_loss_base_q2[index_divide].avg:.3f} |"
             f'\tMS-SSIM loss: {msssim_loss_base_q2[index_divide].avg:.4f} |'
@@ -752,14 +753,14 @@ def test_DPICT_post(epoch,
             f"\tMS-SSIM(DB): {msssim_db_base_q2[index_divide].avg:.2f} "
         )
 
-        print(
+        logging.info(
             f"\tQ3 Loss (Rear): {loss_rear_q3[index_divide].avg:.3f} |"
             f"\tMSE loss: {mse_loss_rear_q3[index_divide].avg:.3f} |"
             f'\tMS-SSIM loss: {msssim_loss_rear_q3[index_divide].avg:.4f} |'
             f"\tPSNR: {psnr_rear_q3[index_divide].avg:.2f} |"
             f"\tMS-SSIM(DB): {msssim_db_rear_q3[index_divide].avg:.2f} "
         )
-        print(
+        logging.info(
             f"\t   Loss (Base): {loss_base_q3[index_divide].avg:.3f} |"
             f"\tMSE loss: {mse_loss_base_q3[index_divide].avg:.3f} |"
             f'\tMS-SSIM loss: {msssim_loss_base_q3[index_divide].avg:.4f} |'
