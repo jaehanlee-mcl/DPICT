@@ -18,6 +18,8 @@ import argparse
 import random
 import sys
 import os
+import logging
+import logging.handlers
 
 import torch
 import torch.optim as optim
@@ -57,8 +59,7 @@ def parse_args(argv):
     parser.add_argument("--checkpoint-only-weight", type=bool, default=True)
 
     parser.add_argument("--N", type=int, default=192, help="network size",)
-    parser.add_argument("--dir-addon-rear-q2", type=str, default='DPICT-Post', help="filename",)
-    parser.add_argument("--dir-addon-rear-q3", type=str, default='DPICT-Post', help="filename",)
+    parser.add_argument("--dir-addon-rear", type=str, default='DPICT-Post', help="filename",)
     parser.add_argument("--model-addon-rear", default="dpict-post", choices=models.keys(), help="Model architecture (default: %(default)s)",)
     parser.add_argument("--checkpoint-addon-rear-q2", type=str, default=None, help="Path to a checkpoint") # 'checkpoint/bmshj2018-factorized-lambda0.01/199.pth.tar'
     parser.add_argument("--checkpoint-addon-rear-q3", type=str, default=None, help="Path to a checkpoint") # 'checkpoint/bmshj2018-factorized-lambda0.01/199.pth.tar'
@@ -125,8 +126,15 @@ def main(argv):
     initial_scales = np.array(args.initial_loss_weights)
 
     last_epoch = 0
-    if args.checkpoint_addon_rear_q2:  # load from previous checkpoint
-        print("Loading", args.checkpoint_addon_rear_q2)
+    log_format = "%(levelname)s %(asctime)s - %(message)s"
+    if args.checkpoint_addon_rear_q2 and args.checkpoint_addon_rear_q3:  # load from previous checkpoint
+        logging.basicConfig(filename='log/' + args.dir_addon_rear + '.log',
+                            filemode='a',
+                            format=log_format,
+                            level=logging.DEBUG)
+
+        # loading q2
+        logging.info("Loading", args.checkpoint_addon_rear_q2)
         checkpoint_addon_rear = torch.load(args.checkpoint_addon_rear_q2, map_location=device)
         net_addon_rear_q2.load_state_dict(checkpoint_addon_rear["state_dict"])
         if args.checkpoint_addon_rear_only_weight_q2 is False:
@@ -135,10 +143,8 @@ def main(argv):
             aux_optimizer_addon_rear_q2.load_state_dict(checkpoint_addon_rear["aux_optimizer"])
             loss_weights = checkpoint_addon_rear["loss_weights"]
             initial_scales = checkpoint_addon_rear["initial_scales"]
-
-    last_epoch = 0
-    if args.checkpoint_addon_rear_q3:  # load from previous checkpoint
-        print("Loading", args.checkpoint_addon_rear_q3)
+        # loading q3
+        logging.info("Loading", args.checkpoint_addon_rear_q3)
         checkpoint_addon_rear = torch.load(args.checkpoint_addon_rear_q3, map_location=device)
         net_addon_rear_q3.load_state_dict(checkpoint_addon_rear["state_dict"])
         if args.checkpoint_addon_rear_only_weight_q3 is False:
@@ -147,15 +153,21 @@ def main(argv):
             aux_optimizer_addon_rear_q3.load_state_dict(checkpoint_addon_rear["aux_optimizer"])
             loss_weights = checkpoint_addon_rear["loss_weights"]
             initial_scales = checkpoint_addon_rear["initial_scales"]
+    else:
+        logging.basicConfig(filename='log/' + args.dir_addon_rear + '.log',
+                            filemode='w',
+                            format=log_format,
+                            level=logging.DEBUG)
+    logger = logging.getLogger()
 
     best_loss_rear_q2 = float("inf")
     best_loss_rear_q3 = float("inf")
     for epoch in range(last_epoch, args.epochs):
 
-        print(f"Learning rate: {optimizer_addon_rear_q2.param_groups[0]['lr']}")
-        print(f"Learning rate: {optimizer_addon_rear_q3.param_groups[0]['lr']}")
+        logging.info(f"Learning rate: {optimizer_addon_rear_q2.param_groups[0]['lr']}")
+        logging.info(f"Learning rate: {optimizer_addon_rear_q3.param_groups[0]['lr']}")
         for index in range(len(args.lmbda)):
-            print(
+            logging.info(
                 f"Shared Ratios: {args.shared_ratio[0]} ~ {args.shared_ratio[1]} | "
                 f"Specific Ratios: {args.specific_ratios[index]} ~ {args.specific_ratios[index+1]} | "
                 f"Lambda: {args.lmbda[index]} | "
@@ -180,14 +192,14 @@ def main(argv):
             )
 
         # distillation == True
-        print('  ')
-        print('  [True distillation]')
+        logging.info('  ')
+        logging.info('  [True distillation]')
         losses_test_rear_q2, overall_loss_test_rear_q2,\
         losses_test_rear_q3, overall_loss_test_rear_q3,\
             = test_DPICT_post(epoch, test_dataloader, net_addon_rear_q2, net_addon_rear_q3,
                                 criterion, loss_weights=loss_weights, distillation=True)
         # distillation == False
-        print('  [False distillation]')
+        logging.info('  [False distillation]')
         test_DPICT_post(epoch, test_dataloader, net_addon_rear_q2, net_addon_rear_q3,
                             criterion, loss_weights=loss_weights, distillation=False)
 
@@ -198,10 +210,10 @@ def main(argv):
 
         if args.save:
             # q2
-            filedir = 'checkpoint/' + args.dir_addon_rear_q2
+            filedir = 'checkpoint/' + args.dir_addon_rear
             if os.path.isdir(filedir) == False:
                 os.mkdir(filedir)
-            filename = 'checkpoint/' + args.dir_addon_rear_q2 + '/' + str(epoch).zfill(3) + '_2'
+            filename = 'checkpoint/' + args.dir_addon_rear + '/' + str(epoch).zfill(3) + '_2'
             save_checkpoint(
                 {
                     "epoch": epoch,
@@ -222,10 +234,10 @@ def main(argv):
             )
 
             # q3
-            filedir = 'checkpoint/' + args.dir_addon_rear_q3
+            filedir = 'checkpoint/' + args.dir_addon_rear
             if os.path.isdir(filedir) == False:
                 os.mkdir(filedir)
-            filename = 'checkpoint/' + args.dir_addon_rear_q3 + '/' + str(epoch).zfill(3) + '_3'
+            filename = 'checkpoint/' + args.dir_addon_rear + '/' + str(epoch).zfill(3) + '_3'
             save_checkpoint(
                 {
                     "epoch": epoch,
