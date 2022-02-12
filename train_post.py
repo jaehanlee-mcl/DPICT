@@ -61,8 +61,8 @@ def parse_args(argv):
     parser.add_argument("--N", type=int, default=192, help="network size",)
     parser.add_argument("--dir-addon-rear", type=str, default='DPICT-Post', help="filename",)
     parser.add_argument("--model-addon-rear", default="dpict-post", choices=models.keys(), help="Model architecture (default: %(default)s)",)
-    parser.add_argument("--checkpoint-addon-rear-q2", type=str, default=None, help="Path to a checkpoint") # 'checkpoint/bmshj2018-factorized-lambda0.01/199.pth.tar'
-    parser.add_argument("--checkpoint-addon-rear-q3", type=str, default=None, help="Path to a checkpoint") # 'checkpoint/bmshj2018-factorized-lambda0.01/199.pth.tar'
+    parser.add_argument("--checkpoint-addon-rear-q2", type=str, default=None, help="Path to a checkpoint") # 'checkpoint/DPICT-Post/019.pth.tar'
+    parser.add_argument("--checkpoint-addon-rear-q3", type=str, default=None, help="Path to a checkpoint") # 'checkpoint/DPICT-Post/019.pth.tar'
     parser.add_argument("--checkpoint-addon-rear-only-weight-q2", type=bool, default=False)
     parser.add_argument("--checkpoint-addon-rear-only-weight-q3", type=bool, default=False)
     args = parser.parse_args(argv)
@@ -134,7 +134,7 @@ def main(argv):
                             level=logging.DEBUG)
 
         # loading q2
-        logging.info("Loading", args.checkpoint_addon_rear_q2)
+        logging.info("Loading" + args.checkpoint_addon_rear_q2)
         checkpoint_addon_rear = torch.load(args.checkpoint_addon_rear_q2, map_location=device)
         net_addon_rear_q2.load_state_dict(checkpoint_addon_rear["state_dict"])
         if args.checkpoint_addon_rear_only_weight_q2 is False:
@@ -144,7 +144,7 @@ def main(argv):
             loss_weights = checkpoint_addon_rear["loss_weights"]
             initial_scales = checkpoint_addon_rear["initial_scales"]
         # loading q3
-        logging.info("Loading", args.checkpoint_addon_rear_q3)
+        logging.info("Loading" + args.checkpoint_addon_rear_q3)
         checkpoint_addon_rear = torch.load(args.checkpoint_addon_rear_q3, map_location=device)
         net_addon_rear_q3.load_state_dict(checkpoint_addon_rear["state_dict"])
         if args.checkpoint_addon_rear_only_weight_q3 is False:
