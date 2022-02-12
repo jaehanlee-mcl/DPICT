@@ -50,7 +50,7 @@ def parse_args(argv):
     parser.add_argument("--save", action="store_true", default=True, help="Save model to disk")
     parser.add_argument("--seed", type=float, help="Set random seed for reproducibility")
     parser.add_argument("--clip_max_norm", default=1.0, type=float, help="gradient clipping max norm (default: %(default)s",)
-    parser.add_argument("--checkpoint", type=str, default=None, help="Path to a checkpoint") # 'checkpoint/bmshj2018-factorized-lambda0.01/199.pth.tar'
+    parser.add_argument("--checkpoint", type=str, default=None, help="Path to a checkpoint") # 'checkpoint/DPICT-Main/099.pth.tar'
     parser.add_argument("--checkpoint-only-weight", type=bool, default=False)
 
     parser.add_argument("--shared_ratio", type=list, default=[0/1, 1/1], help="shared parameters",)
@@ -119,7 +119,7 @@ def main(argv):
                             format=log_format,
                             level=logging.DEBUG)
 
-        logging.info("Loading", args.checkpoint)
+        logging.info("Loading" + args.checkpoint)
         checkpoint = torch.load(args.checkpoint, map_location=device)
         net.load_state_dict(checkpoint["state_dict"])
         if args.checkpoint_only_weight is False:
