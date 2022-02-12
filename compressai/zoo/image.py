@@ -131,42 +131,6 @@ model_urls = {
     },
     "cheng2020-attn": {
         "mse": {},
-    },
-    "cheng2020-slim": {
-        "mse": {},
-    },
-    "cheng2020-gm-slim-quant": {
-        "mse": {},
-    },
-    "cheng2020-gm-slide-quant": {
-        "mse": {},
-    },
-    "cheng2020-gm-divide-quant": {
-        "mse": {},
-    },
-    "progressive-gm-divide-quant": {
-        "mse": {},
-    },
-    "progressive-divide-quant": {
-        "mse": {},
-    },
-    "progressive-divide-quant-v2": {
-        "mse": {},
-    },
-    "progressive-divide-quant-v3": {
-        "mse": {},
-    },
-    "progressive-divide-quant-v4a": {
-        "mse": {},
-    },
-    "progressive-divide-quant-v4b": {
-        "mse": {},
-    },
-    "progressive-divide-quant-v4c": {
-        "mse": {},
-    },
-    "progressive-divide-quant-v4d": {
-        "mse": {},
     }
 }
 
