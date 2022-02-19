@@ -111,9 +111,9 @@ def compress_DPICT(y, means_hat, scales_hat):
             m_old = list(map(lambda x, y: x.sum(dim=-1) / y.sum(dim=-1), xpmfs_list_l, pmfs_list_l))
             D_old = list(map(lambda x2p, xp, p, m: (x2p.sum(-1) - 2 * m * xp.sum(-1) + (m ** 2) * p.sum(-1)) / p.sum(-1), x2pmfs_list_l, xpmfs_list_l, pmfs_list_l, m_old))
 
-            pmfs_cond_list_l = list(map(lambda x: x.view(x.size(0), -1, mode ** (max_L - 1 - i)).sum(-1), pmfs_list_l))
-            xpmfs_cond_list_l = list(map(lambda xp: xp.view(xp.size(0), -1, mode ** (max_L - 1 - i)).sum(-1), xpmfs_list_l))
-            x2pmfs_cond_list_l = list(map(lambda x: x.view(x.size(0), -1, mode ** (max_L - 1 - i)).sum(-1), x2pmfs_list_l))
+            pmfs_cond_list_l = list(map(lambda x: x.view(x.size(0), mode, mode ** (max_L - 1 - i)).sum(-1), pmfs_list_l))
+            xpmfs_cond_list_l = list(map(lambda xp: xp.view(xp.size(0), mode, mode ** (max_L - 1 - i)).sum(-1), xpmfs_list_l))
+            x2pmfs_cond_list_l = list(map(lambda x: x.view(x.size(0), mode, mode ** (max_L - 1 - i)).sum(-1), x2pmfs_list_l))
 
             m_new = list(map(lambda xp, p: xp / p, xpmfs_cond_list_l, pmfs_cond_list_l))
             D_new = list(map(lambda x2p, xp, p, m, fullp: ((x2p - 2 * m * xp + (m ** 2) * p) / fullp.sum(-1).view(-1, 1)).sum(-1),
@@ -174,10 +174,14 @@ def compress_DPICT(y, means_hat, scales_hat):
                 tmp_ = torch.arange(mode ** (max_L - i), device=device).repeat(Nary_part.size(0), 1).int()
                 idx_ts_list[j] *= (torch.div((tmp_ % (mode ** (max_L - i))), (mode ** (max_L - 1 - i)), rounding_mode="floor") == Nary_part)
                 nz_idx = idx_ts_list[j].nonzero(as_tuple=True)
-                pmfs_list[j] = pmfs_list[j][nz_idx].view(pmfs_list[j].size(0), -1)
-                xpmfs_list[j] = xpmfs_list[j][nz_idx].view(pmfs_list[j].size(0), -1)
-                x2pmfs_list[j] = x2pmfs_list[j][nz_idx].view(pmfs_list[j].size(0), -1)
-                idx_ts_list[j] = idx_ts_list[j][nz_idx].view(pmfs_list[j].size(0), -1)
+                num_pmf = pmfs_list[j].size(0)
+                if num_pmf == 0:
+                    continue
+                size_pmf = pmfs_list[j][nz_idx].size(0) // num_pmf
+                pmfs_list[j] = pmfs_list[j][nz_idx].view(num_pmf, size_pmf)
+                xpmfs_list[j] = xpmfs_list[j][nz_idx].view(num_pmf, size_pmf)
+                x2pmfs_list[j] = x2pmfs_list[j][nz_idx].view(num_pmf, size_pmf)
+                idx_ts_list[j] = idx_ts_list[j][nz_idx].view(num_pmf, size_pmf)
 
     return y_strings
 
@@ -277,9 +281,9 @@ def decompress_DPICT(y_strings, means_hat, scales_hat):
             m_old = list(map(lambda xp, p: xp.sum(dim=-1) / p.sum(dim=-1), xpmfs_list_l, pmfs_list_l))
             D_old = list(map(lambda x2p, xp, p, m: (x2p.sum(-1) - 2 * m * xp.sum(-1) + (m ** 2) * p.sum(-1)) / p.sum(-1), x2pmfs_list_l, xpmfs_list_l, pmfs_list_l, m_old))
 
-            pmfs_cond_list_l = list(map(lambda x: x.view(x.size(0), -1, mode ** (max_L - 1 - i)).sum(-1), pmfs_list_l))
-            xpmfs_cond_list_l = list(map(lambda xp: xp.view(xp.size(0), -1, mode ** (max_L - 1 - i)).sum(-1), xpmfs_list_l))
-            x2pmfs_cond_list_l = list(map(lambda x: x.view(x.size(0), -1, mode ** (max_L - 1 - i)).sum(-1), x2pmfs_list_l))
+            pmfs_cond_list_l = list(map(lambda x: x.view(x.size(0), mode, mode ** (max_L - 1 - i)).sum(-1), pmfs_list_l))
+            xpmfs_cond_list_l = list(map(lambda xp: xp.view(xp.size(0), mode, mode ** (max_L - 1 - i)).sum(-1), xpmfs_list_l))
+            x2pmfs_cond_list_l = list(map(lambda x: x.view(x.size(0), mode, mode ** (max_L - 1 - i)).sum(-1), x2pmfs_list_l))
 
             m_new = list(map(lambda xp, p: xp / p, xpmfs_cond_list_l, pmfs_cond_list_l))
             D_new = list(map(lambda x2p, xp, p, m, fullp: ((x2p - 2 * m * xp + (m ** 2) * p) / fullp.sum(-1).view(-1, 1)).sum(-1),
@@ -345,10 +349,14 @@ def decompress_DPICT(y_strings, means_hat, scales_hat):
                         tmp_ = torch.arange(mode ** (max_L - i), device=device).repeat(Nary_part.size(0), 1).int()
                         idx_ts_list[j] *= (torch.div((tmp_ % (mode ** (max_L - i))), (mode ** (max_L - 1 - i)), rounding_mode="floor") == Nary_part)
                         nz_idx = idx_ts_list[j].nonzero(as_tuple=True)
-                        pmfs_list[j] = pmfs_list[j][nz_idx].view(pmfs_list[j].size(0), -1)
-                        xpmfs_list[j] = xpmfs_list[j][nz_idx].view(pmfs_list[j].size(0), -1)
-                        x2pmfs_list[j] = x2pmfs_list[j][nz_idx].view(pmfs_list[j].size(0), -1)
-                        idx_ts_list[j] = idx_ts_list[j][nz_idx].view(pmfs_list[j].size(0), -1)
+                        num_pmf = pmfs_list[j].size(0)
+                        if num_pmf == 0:
+                            continue
+                        size_pmf = pmfs_list[j][nz_idx].size(0) // num_pmf
+                        pmfs_list[j] = pmfs_list[j][nz_idx].view(num_pmf, size_pmf)
+                        xpmfs_list[j] = xpmfs_list[j][nz_idx].view(num_pmf, size_pmf)
+                        x2pmfs_list[j] = x2pmfs_list[j][nz_idx].view(num_pmf, size_pmf)
+                        idx_ts_list[j] = idx_ts_list[j][nz_idx].view(num_pmf, size_pmf)
 
                     recon = list(map(lambda xp, p, l: (xp.sum(-1) / p.sum(-1)) - l,
                                      xpmfs_list, pmfs_list, pmf_center_list))
@@ -386,16 +394,12 @@ def decompress_DPICT(y_strings, means_hat, scales_hat):
                         tmp_idx += len(pmfs_list[j])
 
                 for j in range(i + 1):
-                    Nary_part = Nary_tensor[l_per_ele.view(-1) == max_L - j][:, i][
-                        Nary_tensor[l_per_ele.view(-1) == max_L - j][:, i] != -1]
+                    Nary_part = Nary_tensor[l_per_ele.view(-1) == max_L - j][:, i][Nary_tensor[l_per_ele.view(-1) == max_L - j][:, i] != -1]
                     tmp_ = torch.arange(mode ** (max_L - i), device=device).repeat(Nary_part.size(0), 1).int()
                     idx_ts_list[j][Nary_tensor[l_per_ele.view(-1) == max_L - j][:, i] != -1] *= (torch.div((tmp_ % (mode ** (max_L - i))), (mode ** (max_L - 1 - i)), rounding_mode="floor") == Nary_part.view(-1, 1))
-                    pmfs_list[j][Nary_tensor[l_per_ele.view(-1) == max_L - j][:, i] != -1] *=\
-                        idx_ts_list[j][Nary_tensor[l_per_ele.view(-1) == max_L - j][:, i] != -1]
-                    xpmfs_list[j][Nary_tensor[l_per_ele.view(-1) == max_L - j][:, i] != -1] *=\
-                        idx_ts_list[j][Nary_tensor[l_per_ele.view(-1) == max_L - j][:, i] != -1]
-                    x2pmfs_list[j][Nary_tensor[l_per_ele.view(-1) == max_L - j][:, i] != -1] *=\
-                        idx_ts_list[j][Nary_tensor[l_per_ele.view(-1) == max_L - j][:, i] != -1]
+                    pmfs_list[j][Nary_tensor[l_per_ele.view(-1) == max_L - j][:, i] != -1] *= idx_ts_list[j][Nary_tensor[l_per_ele.view(-1) == max_L - j][:, i] != -1]
+                    xpmfs_list[j][Nary_tensor[l_per_ele.view(-1) == max_L - j][:, i] != -1] *= idx_ts_list[j][Nary_tensor[l_per_ele.view(-1) == max_L - j][:, i] != -1]
+                    x2pmfs_list[j][Nary_tensor[l_per_ele.view(-1) == max_L - j][:, i] != -1] *= idx_ts_list[j][Nary_tensor[l_per_ele.view(-1) == max_L - j][:, i] != -1]
                 Nary_tensor[Nary_tensor < 0] = 0
 
                 recon = list(map(lambda xp, p, l: (xp.sum(-1) / p.sum(-1)) - l, xpmfs_list, pmfs_list, pmf_center_list))
