@@ -175,9 +175,7 @@ def compress_DPICT(y, means_hat, scales_hat):
                 idx_ts_list[j] *= (torch.div((tmp_ % (mode ** (max_L - i))), (mode ** (max_L - 1 - i)), rounding_mode="floor") == Nary_part)
                 nz_idx = idx_ts_list[j].nonzero(as_tuple=True)
                 num_pmf = pmfs_list[j].size(0)
-                if num_pmf == 0:
-                    continue
-                size_pmf = pmfs_list[j][nz_idx].size(0) // num_pmf
+                size_pmf = pmfs_list[j].size(1) // mode
                 pmfs_list[j] = pmfs_list[j][nz_idx].view(num_pmf, size_pmf)
                 xpmfs_list[j] = xpmfs_list[j][nz_idx].view(num_pmf, size_pmf)
                 x2pmfs_list[j] = x2pmfs_list[j][nz_idx].view(num_pmf, size_pmf)
@@ -350,9 +348,7 @@ def decompress_DPICT(y_strings, means_hat, scales_hat):
                         idx_ts_list[j] *= (torch.div((tmp_ % (mode ** (max_L - i))), (mode ** (max_L - 1 - i)), rounding_mode="floor") == Nary_part)
                         nz_idx = idx_ts_list[j].nonzero(as_tuple=True)
                         num_pmf = pmfs_list[j].size(0)
-                        if num_pmf == 0:
-                            continue
-                        size_pmf = pmfs_list[j][nz_idx].size(0) // num_pmf
+                        size_pmf = pmfs_list[j].size(1) // mode
                         pmfs_list[j] = pmfs_list[j][nz_idx].view(num_pmf, size_pmf)
                         xpmfs_list[j] = xpmfs_list[j][nz_idx].view(num_pmf, size_pmf)
                         x2pmfs_list[j] = x2pmfs_list[j][nz_idx].view(num_pmf, size_pmf)
