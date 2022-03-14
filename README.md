@@ -1,4 +1,4 @@
-## DPICT: Deep Progressive Image Compression Using Trit-Planes
+## [CVPR 2022] DPICT: Deep Progressive Image Compression Using Trit-Planes
 
 ------
 ### 1. Preparation
