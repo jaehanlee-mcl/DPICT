@@ -1,5 +1,15 @@
 ## [CVPR 2022] DPICT: Deep Progressive Image Compression Using Trit-Planes
-Paper link: [arXiv](https://arxiv.org/pdf/2112.06334.pdf)
+Paper link: [arXiv](https://arxiv.org/pdf/2112.06334.pdf), [CVPR]()
+
+If you use our code or results, please cite:
+```
+@InProceedings{lee2021dpict,
+  title={DPICT: Deep Progressive Image Compression Using Trit-Planes},
+  author={Lee, Jae-Han and Jeon, Seungmin and Choi, Kwang Pyo and Park, Youngo and Kim, Chang-Su},
+  booktitle={Proceedings of the IEEE/CVF International Conference on Computer Vision},
+  year = {2022}
+}
+```
 
 ------
 ### 1. Preparation
