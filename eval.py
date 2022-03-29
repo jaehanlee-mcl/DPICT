@@ -269,7 +269,7 @@ def get_metrics(x_in, x_hats, y_strings_list, z_strings_list, get_metrics_t_mean
     get_metrics_start = time.time()
 
     z_strings = z_strings_list.read()
-    bpp = 8 * len(z_strings)
+    bpp = 8 * len(open(z_strings_list.name, "rb").read())
     for index in range(len(x_hats)):
         x_hat = x_hats[index]
         # bpp, psnr, ms-ssim
