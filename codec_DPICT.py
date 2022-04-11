@@ -23,7 +23,7 @@ opt_pnum = 6
 pnum_btw_trit = 48
 pnum_part = 1.0
 
-def compress_DPICT(y, means_hat, scales_hat):
+def compress_DPICT(y, means_hat, scales_hat, get_tritlevel_tensor=False):
     device = y.device
 
     scales_hat = scales_hat.clamp_(min=0.04)
@@ -41,6 +41,9 @@ def compress_DPICT(y, means_hat, scales_hat):
     Nary_tensor = torch.zeros(list(y.shape) + [max_L]).int().to(device)
     symbol_tensor = torch.round(y - means_hat).int() + torch.div(mode ** l_per_ele, 2, rounding_mode="floor")
     symbol_tensor = torch.clamp(symbol_tensor, min=torch.zeros(y.shape).int().to(device), max=3 ** l_per_ele - 1)
+
+    tritlevel_tensor = torch.zeros_like(means_hat).to(device)
+    tritlevel_tensor_list = []
 
     for i in range(1, max_L + 1):
         Nary_tensor[:, :, :, :, i - 1] = torch.div(symbol_tensor, (mode ** (max_L - i)), rounding_mode="floor")
@@ -104,6 +107,9 @@ def compress_DPICT(y, means_hat, scales_hat):
                 x2pmfs_list[j] = x2pmfs_list[j][nz_idx].view(pmfs_list[j].size(0), -1)
                 idx_ts_list[j] = idx_ts_list[j][nz_idx].view(pmfs_list[j].size(0), -1)
 
+            tritlevel_tensor += 1
+            tritlevel_tensor_list.append(tritlevel_tensor.clone().detach())
+
         else:
             pmfs_list_l = pmfs_list[:i + 1]
             xpmfs_list_l = xpmfs_list[:i + 1]
@@ -124,7 +130,6 @@ def compress_DPICT(y, means_hat, scales_hat):
             delta_R = list(map(lambda h: h * (h >= 0), delta_R))
 
             optim_tensor = torch.cat(list(map(lambda D, R: -(D / R), delta_D, delta_R))).clamp_(min=0)
-
             pmfs_norm = list(map(lambda p: p / p.sum(-1).view(-1, 1), pmfs_cond_list_l))
 
             tail_mass = list(map(lambda p: torch.zeros([len(p), 1]).to(device) + 1e-09, pmfs_norm))
@@ -135,6 +140,10 @@ def compress_DPICT(y, means_hat, scales_hat):
             total_symbols = len(total_symbols_list)
             cdf_lengths = [mode + 2 for _ in range(total_symbols)]
             offsets = [-(mode // 2) for _ in range(total_symbols)]
+
+            tritlevel_tensor[l_per_ele < max_L - i] += 1
+            idx_elements = torch.cat([torch.stack(torch.where(l_per_ele == max_L - j), dim=0) for j in range(i + 1)], dim=1)
+            idx_elements = idx_elements[:, torch.argsort(optim_tensor, descending=True)]
 
             torch.cuda.empty_cache()
 
@@ -156,6 +165,10 @@ def compress_DPICT(y, means_hat, scales_hat):
                         offsets[point * sl:]
                     )
                     y_strings[i].append(encoder.flush())
+
+                    tritlevel_tensor[idx_elements[:, point * sl:].tolist()] += 1
+                    tritlevel_tensor_list.append(tritlevel_tensor.clone().detach())
+
                     break
                 symbols_list = total_symbols_list[point * sl:(point + 1) * sl]
                 indexes_list = list(range(len(symbols_list)))
@@ -167,6 +180,10 @@ def compress_DPICT(y, means_hat, scales_hat):
                     offsets[point * sl:(point + 1) * sl]
                 )
                 y_strings[i].append(encoder.flush())
+
+                tritlevel_tensor[idx_elements[:, point * sl:(point + 1) * sl].tolist()] += 1
+                tritlevel_tensor_list.append(tritlevel_tensor.clone().detach())
+
                 encoder = BufferedRansEncoder()
 
             for j in range(i + 1):
@@ -181,9 +198,12 @@ def compress_DPICT(y, means_hat, scales_hat):
                 x2pmfs_list[j] = x2pmfs_list[j][nz_idx].view(num_pmf, size_pmf)
                 idx_ts_list[j] = idx_ts_list[j][nz_idx].view(num_pmf, size_pmf)
 
-    return y_strings
+    if get_tritlevel_tensor:
+        return y_strings, tritlevel_tensor_list
+    else:
+        return y_strings
 
-def decompress_DPICT(y_strings, means_hat, scales_hat):
+def decompress_DPICT(y_strings, means_hat, scales_hat, get_tritlevel_tensor=False):
     device = means_hat.device
     y_hats = []
     scales_hat = scales_hat.clamp_(min=0.04)
@@ -198,6 +218,9 @@ def decompress_DPICT(y_strings, means_hat, scales_hat):
         max_L = min(l_per_ele.max() - 1, L)
         l_per_ele = torch.clamp(l_per_ele, 1, max_L)
     pmf_l_tensor = torch.div((mode ** l_per_ele.view(-1)), 2, rounding_mode="floor")
+
+    tritlevel_tensor = torch.zeros_like(means_hat).to(device)
+    tritlevel_tensor_list = []
 
     Nary_tensor = torch.zeros([pmf_l_tensor.size(0)] + [max_L]).int().to(device)
 
@@ -265,6 +288,9 @@ def decompress_DPICT(y_strings, means_hat, scales_hat):
                 x2pmfs_list[j] = x2pmfs_list[j][nz_idx].view(pmfs_list[j].size(0), -1)
                 idx_ts_list[j] = idx_ts_list[j][nz_idx].view(pmfs_list[j].size(0), -1)
 
+            tritlevel_tensor += 1
+            tritlevel_tensor_list.append(tritlevel_tensor.clone().detach())
+
             recon = list(map(lambda xp, p, l: (xp.sum(-1) / p.sum(-1)) - l, xpmfs_list, pmfs_list, pmf_center_list))
             y_hat = means_hat.clone().view(-1)
             for j in range(i + 1):
@@ -302,6 +328,11 @@ def decompress_DPICT(y_strings, means_hat, scales_hat):
             cdf_lengths = [mode + 2 for _ in range(total_symbols)]
             offsets = [-(mode // 2) for _ in range(total_symbols)]
             del tail_mass
+
+            tritlevel_tensor[l_per_ele < max_L - i] += 1
+            idx_elements = torch.cat([torch.stack(torch.where(l_per_ele == max_L - j), dim=0) for j in range(i + 1)], dim=1)
+            idx_elements = idx_elements[:, torch.argsort(optim_tensor, descending=True)]
+
             torch.cuda.empty_cache()
 
             pnum_part = _pnum_part(i, max_L)
@@ -360,6 +391,10 @@ def decompress_DPICT(y_strings, means_hat, scales_hat):
                     for j in range(i + 1):
                         y_hat[l_per_ele.view(-1) == max_L - j] += recon[j]
                     y_hats.append(y_hat.view(means_hat.shape))
+
+                    tritlevel_tensor[idx_elements[:, point * sl:].tolist()] += 1
+                    tritlevel_tensor_list.append(tritlevel_tensor.clone().detach())
+
                     break
 
                 indexes_list = list(range(sl))
@@ -398,13 +433,19 @@ def decompress_DPICT(y_strings, means_hat, scales_hat):
                     x2pmfs_list[j][Nary_tensor[l_per_ele.view(-1) == max_L - j][:, i] != -1] *= idx_ts_list[j][Nary_tensor[l_per_ele.view(-1) == max_L - j][:, i] != -1]
                 Nary_tensor[Nary_tensor < 0] = 0
 
+                tritlevel_tensor[idx_elements[:, point * sl:(point + 1) * sl].tolist()] += 1
+                tritlevel_tensor_list.append(tritlevel_tensor.clone().detach())
+
                 recon = list(map(lambda xp, p, l: (xp.sum(-1) / p.sum(-1)) - l, xpmfs_list, pmfs_list, pmf_center_list))
                 y_hat = means_hat.clone().view(-1)
                 for j in range(i + 1):
                     y_hat[l_per_ele.view(-1) == max_L - j] += recon[j]
                 y_hats.append(y_hat.view(means_hat.shape))
 
-    return y_hats
+    if get_tritlevel_tensor:
+        return y_hats, tritlevel_tensor_list
+    else:
+        y_hats
 
 def _pmf_to_cdf(pmf, tail_mass, pmf_length, max_length):
     cdf = torch.zeros((len(pmf_length), max_length + 2), dtype=torch.int32, device=pmf.device)
