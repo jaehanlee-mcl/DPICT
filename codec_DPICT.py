@@ -445,7 +445,7 @@ def decompress_DPICT(y_strings, means_hat, scales_hat, get_tritlevel_tensor=Fals
     if get_tritlevel_tensor:
         return y_hats, tritlevel_tensor_list
     else:
-        y_hats
+        return y_hats
 
 def _pmf_to_cdf(pmf, tail_mass, pmf_length, max_length):
     cdf = torch.zeros((len(pmf_length), max_length + 2), dtype=torch.int32, device=pmf.device)
