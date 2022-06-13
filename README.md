@@ -1,5 +1,5 @@
 ## [CVPR 2022] DPICT: Deep Progressive Image Compression Using Trit-Planes
-Accepted to CVPR 2022 as oral presentation
+Accepted to CVPR 2022 as Oral presentation
 
 Paper link: [CVPR](https://openaccess.thecvf.com/content/CVPR2022/papers/Lee_DPICT_Deep_Progressive_Image_Compression_Using_Trit-Planes_CVPR_2022_paper.pdf), [arXiv](https://arxiv.org/pdf/2112.06334.pdf)
 
