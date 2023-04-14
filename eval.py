@@ -481,7 +481,7 @@ def main():
         "device": "cuda",
         "metric": 'mse',
         "N-Main": 192,
-        "N-Post": 144,
+        "N-Post": 192,
         "layer": 10,
         "coder": 'ans',
         "show": False,
